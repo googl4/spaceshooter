@@ -1,0 +1,219 @@
+setmode( 1280, 720 )
+cls2
+ship = newsprite( 1 )
+loadsprite( "playerShip.png", ship, 0 )
+setspritetrans( ship, 255, 0, 255 )
+shipX = ( gwidth / 2 ) - ( getspritew( ship ) / 2 )
+shipY = ( gheight / 2 ) - ( getspriteh( ship ) / 2 )
+shipAngle = 0
+shipSpeedX = 0
+shipSpeedY = 0
+lives = 3
+hit = 0
+score = 0
+dim livesSprites( 3 )
+for i = 0 to 2 cycle
+	livesSprites( i ) = newsprite( 1 )
+	loadsprite( "playerLife.png", livesSprites( i ), 0 )
+	setspritetrans( livesSprites( i ), 255, 0, 255 )
+	plotsprite( livesSprites( i ), i * ( getspritew( livesSprites( i ) ) + 5 ), gheight - getspriteh( livesSprites( i ) ), 0 )
+repeat
+dim laserSprites( 10 )
+dim laserTimes( 10 )
+for i = 0 to 9 cycle
+	laserSprites( i ) = newsprite( 1 )
+	loadsprite( "laserBlue.png", laserSprites( i ), 0 )
+	setspritetrans( laserSprites( i ), 255, 0, 255 )
+	laserTimes( i ) = 0
+repeat
+numLasers = 0
+dim meteorSprites( 20 )
+dim meteorSize( 20 )
+numMeteors = 0
+maxMeteors = 10
+for i = 0 to 19 cycle
+	meteorSprites( i ) = newsprite( 4 )
+	loadsprite( "bigMeteor.png", meteorSprites( i ), 0 )
+	loadsprite( "medMeteor.png", meteorSprites( i ), 1 )
+	loadsprite( "smallMeteor.png", meteorSprites( i ), 2 )
+	loadsprite( "tinyMeteor.png", meteorSprites( i ), 3 )
+	setspritetrans( meteorSprites( i ), 255, 0, 255 )
+	meteorSize( i ) = 5
+repeat
+background = loadimage( "black.png" )
+for x = 0 to gwidth / getimagew( background ) cycle
+	for y = 0 to gheight / getimageh( background ) cycle
+		plotimage( background, x * getimagew( background ), y * getimageh( background ) )
+	repeat
+repeat
+for i = 0 to maxMeteors cycle
+	proc newMeteors()
+repeat
+cycle
+	if scankeyboard( scand ) then
+		shipAngle = shipAngle + 5
+		setspriteangle( ship, shipAngle )
+	else
+		if scankeyboard( scana ) then
+			shipAngle = shipAngle - 5
+			setspriteAngle( ship, shipAngle )
+		endif
+	endif
+	if scankeyboard( scanw ) then
+		if shipSpeedX < 10 then
+			if shipSpeedX > -10 then
+				shipSpeedX = shipSpeedX + sin( shipAngle )
+			else
+				shipSpeedX = -10
+			endif
+		else
+			shipSpeedX = 10
+		endif
+		if shipSpeedY < 10 then
+			if shipSpeedY > -10 then
+				shipSpeedY = shipSpeedY + cos( shipAngle )
+			else
+				shipSpeedY = -10
+			endif
+		else
+			shipSpeedY = 10
+		endif
+	else
+		if scankeyboard( scans ) then
+			shipSpeedX = shipSpeedX * 0.9
+			shipSpeedY = shipSpeedY * 0.9
+		endif
+	endif
+	if scankeyboard( scanspace ) then
+		if numLasers < 10 then
+			laserTimes( numLasers ) = 1
+			setspriteangle( laserSprites( numLasers ), shipAngle )
+			plotsprite( laserSprites( numLasers ), shipX, shipY, 0 )
+		endif
+	endif
+	shipX = shipX + shipSpeedX
+	shipY = shipY + shipSpeedY
+	if shipX < 0 then
+		shipX = gwidth - getspritew( ship )
+	endif
+	if shipX > gwidth then
+		shipX = 0
+	endif
+	if shipY < 0 then
+		shipY = gheight - getspriteh( ship )
+	endif
+	if shipY > gheight then
+		shipY = 0
+	endif
+	if numMeteors < maxMeteors then
+		proc newMeteors()
+	endif
+	for i = 0 to 9 cycle
+		if laserTimes( i ) = 60 then
+			hidesprite( laserSprites( i ) )
+			laserTimes( i ) = 61
+		endif
+		if laserTimes( i ) < 60 then
+			if laserTimes( i ) > 0 then
+				advancesprite( laserSprites( i ), 10 )
+				laserTimes( i ) = laserTimes( i ) + 1
+			endif
+		endif
+		if getspritex( laserSprites( i ) ) < 0 then
+			plotsprite( laserSprites( i ), gwidth, getspritey( laserSprites( i ) ), 0 )
+		endif
+		if getspritex( laserSprites( i ) ) > gwidth then
+			plotsprite( laserSprites( i ), 0, getspritey( laserSprites( i ) ), 0 )
+		endif
+		if getspritey( laserSprites( i ) ) < 0 then
+			plotsprite( laserSprites( i ), getspritex( laserSprites( i ) ), gheight, 0 )
+		endif
+		if getspritey( laserSprites( i ) ) > gheight then
+			plotsprite( laserSprites( i ), getspritex( laserSprites( i ) ), 0, 0 )
+		endif
+		for m = 0 to numMeteors cycle
+			if meteorSize( m ) < 5 then
+				if spritecollide( laserSprites( i ) ) = meteorSprites( m ) then
+					hidesprite( meteorSprites( m ) )
+					numMeteors = numMeteors - 1
+					meteorSize( m ) = 5
+					score = score + 1
+				endif
+			endif
+		repeat
+	repeat
+	numLasers = 0
+	for i = 0 to 9 cycle
+		if laserTimes( i ) < 61 then
+			if laserTimes( i ) > 0 then
+				numLasers = numLasers + 1
+			endif
+		endif
+	repeat
+	if hit > 0 then
+		hit = hit - 1
+	endif
+	for i = 0 to numMeteors cycle
+		if meteorSize( i ) < 5 then
+			advancesprite( meteorSprites( i ), 2 + meteorSize( i ) )
+			if getspritex( meteorSprites( i ) ) < 0 then
+				plotsprite( meteorSprites( i ), gwidth, getspritey( meteorSprites( i ) ), meteorSize( i ) )
+			endif
+			if getspritex( meteorSprites( i ) ) > gwidth then
+				plotsprite( meteorSprites( i ), 0, getspritey( meteorSprites( i ) ), meteorSize( i ) )
+			endif
+			if getspritey( meteorSprites( i ) ) < 0 then
+				plotsprite( meteorSprites( i ), getspritex( meteorSprites( i ) ), gheight, meteorSize( i ) )
+			endif
+			if getspritey( meteorSprites( i ) ) > gheight then
+				plotsprite( meteorSprites( i ), getspritex( meteorSprites( i ) ), 0, meteorSize( i ) )
+			endif
+			if hit = 0 then
+				if spritecollide( ship ) = meteorSprites( i ) then
+					hidesprite( livesSprites( lives - 1 ) )
+					lives = lives - 1
+					hit = 20
+				endif
+			endif
+		endif
+	repeat
+	if lives = 0 then
+		printat( twidth / 2 - 5, theight / 2 )
+		print "Game Over!"
+		printat( twidth / 2 - 5, theight / 2 + 1 )
+		print "Score: ";
+		print score
+		end
+	endif
+	plotsprite( ship, shipX, shipY, 0 )
+	update
+	wait( 0.01 )
+repeat
+end
+def proc newMeteors()
+	side = rnd( 4 )
+	if side = 0 then
+		meteorSize( numMeteors ) = rnd( 4 )
+		plotsprite( meteorSprites( numMeteors ), 0, rnd( gheight ), meteorSize( numMeteors ) )
+		setspriteangle( meteorSprites( numMeteors ), rnd( 180 ) )
+		numMeteors = numMeteors + 1
+	endif
+	if side = 1 then
+		meteorSize( numMeteors ) = rnd( 4 )
+		plotsprite( meteorSprites( numMeteors ), rnd( gwidth ), gheight, meteorSize( numMeteors ) )
+		setspriteangle( meteorSprites( numMeteors ), rnd( 180 ) + 90 )
+		numMeteors = numMeteors + 1
+	endif
+	if side = 2 then
+		meteorSize( numMeteors ) = rnd( 4 )
+		plotsprite( meteorSprites( numMeteors ), gwidth, rnd( gheight ), meteorSize( numMeteors ) )
+		setspriteangle( meteorSprites( numMeteors ), rnd( 180 ) + 180 )
+		numMeteors = numMeteors + 1
+	endif
+	if side = 3 then
+		meteorSize( numMeteors ) = rnd( 4 )
+		plotsprite( meteorSprites( numMeteors ), rnd( gwidth ), 0, meteorSize( numMeteors ) )
+		setspriteangle( meteorSprites( numMeteors ), rnd( 180 ) + 270 )
+		numMeteors = numMeteors + 1
+	endif
+endproc
